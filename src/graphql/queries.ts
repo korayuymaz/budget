@@ -10,8 +10,6 @@ export const GET_EXPENSES = gql`
 			date
 			category
 			isFixed
-			createdAt
-			updatedAt
 		}
 	}
 `;
@@ -24,8 +22,6 @@ export const GET_EARNINGS = gql`
 			amount
 			currency
 			date
-			createdAt
-			updatedAt
 		}
 	}
 `;

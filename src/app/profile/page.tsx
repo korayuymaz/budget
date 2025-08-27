@@ -7,8 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Currency } from "@/types";
 import { User as UserIcon, Settings, Globe } from "lucide-react";
 import { GET_USER_BY_ID } from "@/graphql/queries";
-import { UPDATE_USER } from "@/graphql/mutations";
-import { client } from "../lib/apollo";
 import { useQuery } from "@apollo/client";
 import Image from "next/image";
 

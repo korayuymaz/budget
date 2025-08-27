@@ -81,7 +81,6 @@ export function EarningList() {
 	if (earnings.length === 0) {
 		return (
 			<div className="text-center py-8">
-				<DollarSign className="h-12 w-12 mx-auto mb-4 text-gray-300" />
 				<p className="text-gray-500">No earnings recorded yet</p>
 				<p className="text-sm text-gray-400">
 					Start adding earnings to see them here
@@ -101,7 +100,6 @@ export function EarningList() {
 						<h3 className="font-medium text-gray-900">{earning.description}</h3>
 						<div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
 							<div className="flex items-center space-x-1">
-								<DollarSign className="h-4 w-4" />
 								<span>
 									{getCurrencySymbol(earning.currency)}
 									{earning.amount.toFixed(2)}

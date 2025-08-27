@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -9,7 +9,7 @@ import { Calendar, DollarSign, FileText } from "lucide-react";
 import { CREATE_EARNING } from "@/graphql/mutations";
 import { GET_EARNINGS } from "@/graphql/queries";
 import { ApolloError, useMutation } from "@apollo/client";
-import { useSession } from "next-auth/react";
+import { UserContext } from "./SessionProvider";
 
 const earningSchema = z.object({
 	description: z.string().min(1, "Description is required"),
@@ -22,7 +22,8 @@ type EarningFormData = z.infer<typeof earningSchema>;
 
 export function EarningForm() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const { data: session } = useSession();
+	const { user } = useContext(UserContext);
+
 	const {
 		register,
 		handleSubmit,
@@ -47,8 +48,9 @@ export function EarningForm() {
 	});
 
 	const onSubmit = (data: EarningFormData) => {
+		console.log("myData:", data);
 		createEarning({
-			variables: { earnings: { ...data, userId: session?.user?.id } },
+			variables: { earnings: { ...data, userId: user?.id } },
 		});
 	};
 

@@ -10,7 +10,7 @@ import { CREATE_USER } from "@/graphql/mutations";
 export default function SignInPage() {
 	const { data: session, status } = useSession();
 	const { data: user, loading: userLoading } = useQuery(GET_USER_BY_ID, {
-		variables: { id: session?.user.id },
+		variables: { email: session?.user.email },
 	});
 
 	// Utility function to handle user creation/update

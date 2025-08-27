@@ -2,11 +2,14 @@
 
 import { AuthProvider } from "./AuthProvider";
 import ApolloProviderWrapper from "./ApolloProvider";
+import SessionProvider from "./SessionProvider";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
 	return (
 		<AuthProvider>
-			<ApolloProviderWrapper>{children}</ApolloProviderWrapper>
+			<ApolloProviderWrapper>
+				<SessionProvider>{children}</SessionProvider>
+			</ApolloProviderWrapper>
 		</AuthProvider>
 	);
 }
