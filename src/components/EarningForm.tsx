@@ -4,9 +4,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { apiService } from "@/services/api";
 import { Currency } from "@/types";
 import { Calendar, DollarSign, FileText } from "lucide-react";
+import { CREATE_EARNING } from "@/graphql/mutations";
+import { GET_EARNINGS } from "@/graphql/queries";
+import { ApolloError, useMutation } from "@apollo/client";
+import { useSession } from "next-auth/react";
 
 const earningSchema = z.object({
 	description: z.string().min(1, "Description is required"),
@@ -17,13 +20,9 @@ const earningSchema = z.object({
 
 type EarningFormData = z.infer<typeof earningSchema>;
 
-interface EarningFormProps {
-	onSuccess: () => void;
-}
-
-export function EarningForm({ onSuccess }: EarningFormProps) {
+export function EarningForm() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
-
+	const { data: session } = useSession();
 	const {
 		register,
 		handleSubmit,
@@ -37,18 +36,20 @@ export function EarningForm({ onSuccess }: EarningFormProps) {
 		},
 	});
 
-	const onSubmit = async (data: EarningFormData) => {
-		setIsSubmitting(true);
-		try {
-			await apiService.createEarning(data);
-			reset();
-			onSuccess();
-		} catch (error) {
-			console.error("Failed to create earning:", error);
-			alert("Failed to create earning. Please try again.");
-		} finally {
+	const [createEarning] = useMutation(CREATE_EARNING, {
+		onCompleted: () => {
 			setIsSubmitting(false);
-		}
+		},
+		onError: (err: ApolloError) => {
+			console.error("Failed to create earning:", err.graphQLErrors);
+		},
+		refetchQueries: [GET_EARNINGS],
+	});
+
+	const onSubmit = (data: EarningFormData) => {
+		createEarning({
+			variables: { earnings: { ...data, userId: session?.user?.id } },
+		});
 	};
 
 	const currencies: { value: Currency; label: string; symbol: string }[] = [
@@ -73,7 +74,7 @@ export function EarningForm({ onSuccess }: EarningFormProps) {
 					<input
 						type="text"
 						{...register("description")}
-						className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+						className="text-black w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
 						placeholder="Enter earning description"
 					/>
 					{errors.description && (
@@ -93,7 +94,7 @@ export function EarningForm({ onSuccess }: EarningFormProps) {
 						type="number"
 						step="0.01"
 						{...register("amount", { valueAsNumber: true })}
-						className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+						className="text-black w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
 						placeholder="0.00"
 					/>
 					{errors.amount && (
@@ -108,7 +109,7 @@ export function EarningForm({ onSuccess }: EarningFormProps) {
 					</label>
 					<select
 						{...register("currency")}
-						className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+						className="text-black w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
 					>
 						{currencies.map((currency) => (
 							<option key={currency.value} value={currency.value}>
@@ -127,7 +128,7 @@ export function EarningForm({ onSuccess }: EarningFormProps) {
 					<input
 						type="date"
 						{...register("date")}
-						className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+						className="text-black w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
 					/>
 					{errors.date && (
 						<p className="text-red-600 text-sm mt-1">{errors.date.message}</p>

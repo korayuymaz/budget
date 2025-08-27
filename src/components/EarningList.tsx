@@ -1,32 +1,24 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { apiService } from "@/services/api";
 import { Earning } from "@/types";
 import { format } from "date-fns";
 import { Calendar, DollarSign, Trash2 } from "lucide-react";
+import { useMutation, useQuery } from "@apollo/client";
+import { GET_EARNINGS } from "@/graphql/queries";
+import { DELETE_EARNING } from "@/graphql/mutations";
+import { useSession } from "next-auth/react";
 
 export function EarningList() {
 	const [earnings, setEarnings] = useState<Earning[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-
+	const { data, loading, error } = useQuery(GET_EARNINGS);
+	const [deleteEarning] = useMutation(DELETE_EARNING);
+	const { data: session } = useSession();
 	useEffect(() => {
-		loadEarnings();
-	}, []);
-
-	const loadEarnings = async () => {
-		try {
-			setLoading(true);
-			const data = await apiService.getEarnings();
-			setEarnings(data);
-		} catch (err) {
-			setError("Failed to load earnings");
-			console.error("Error loading earnings:", err);
-		} finally {
-			setLoading(false);
+		if (data) {
+			setEarnings(data.earnings);
 		}
-	};
+	}, [data]);
 
 	const handleDelete = async (id: string) => {
 		if (!confirm("Are you sure you want to delete this earning?")) {
@@ -34,7 +26,16 @@ export function EarningList() {
 		}
 
 		try {
-			await apiService.deleteEarning(id);
+			await deleteEarning({
+				variables: {
+					id,
+				},
+				context: {
+					headers: {
+						"x-user-email": session?.user?.email,
+					},
+				},
+			});
 			setEarnings(earnings.filter((earning) => earning.id !== id));
 		} catch (err) {
 			console.error("Error deleting earning:", err);
@@ -66,9 +67,9 @@ export function EarningList() {
 	if (error) {
 		return (
 			<div className="text-center py-8">
-				<p className="text-red-600">{error}</p>
+				<p className="text-red-600">{error.message}</p>
 				<button
-					onClick={loadEarnings}
+					onClick={() => {}}
 					className="mt-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
 				>
 					Retry

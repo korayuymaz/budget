@@ -1,19 +1,21 @@
 "use client";
 
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { apiService } from "@/services/api";
 import { Currency, ExpenseType } from "@/types";
 import { Calendar, DollarSign, FileText, Tag } from "lucide-react";
+import { CREATE_EXPENSE } from "@/graphql/mutations";
+import { GET_EXPENSES } from "@/graphql/queries";
+import { useSession } from "next-auth/react";
+import { ApolloError, useMutation } from "@apollo/client";
 
 const expenseSchema = z.object({
 	description: z.string().min(1, "Description is required"),
 	amount: z.number().positive("Amount must be positive"),
 	currency: z.enum(["USD", "EUR", "GBP", "TRY", "JPY", "CAD", "AUD"] as const),
 	date: z.string().min(1, "Date is required"),
-	expenseType: z.enum([
+	category: z.enum([
 		"FOOD",
 		"TRANSPORTATION",
 		"HOUSING",
@@ -30,12 +32,8 @@ const expenseSchema = z.object({
 
 type ExpenseFormData = z.infer<typeof expenseSchema>;
 
-interface ExpenseFormProps {
-	onSuccess: () => void;
-}
-
-export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
-	const [isSubmitting, setIsSubmitting] = useState(false);
+export function ExpenseForm() {
+	const { data: session } = useSession();
 
 	const {
 		register,
@@ -46,24 +44,31 @@ export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
 		resolver: zodResolver(expenseSchema),
 		defaultValues: {
 			currency: "USD",
-			expenseType: "OTHER",
+			category: "OTHER",
 			isFixed: false,
 			date: new Date().toISOString().split("T")[0],
 		},
 	});
 
-	const onSubmit = async (data: ExpenseFormData) => {
-		setIsSubmitting(true);
-		try {
-			await apiService.createExpense(data);
+	const [createExpense, { loading }] = useMutation(CREATE_EXPENSE, {
+		onCompleted: () => {
 			reset();
-			onSuccess();
-		} catch (error) {
+		},
+		refetchQueries: [GET_EXPENSES],
+		onError: (error: ApolloError) => {
 			console.error("Failed to create expense:", error);
-			alert("Failed to create expense. Please try again.");
-		} finally {
-			setIsSubmitting(false);
-		}
+		},
+	});
+
+	const onSubmit = (formData: ExpenseFormData) => {
+		createExpense({
+			variables: { expenses: { ...formData } },
+			context: {
+				headers: {
+					"x-user-email": session?.user?.email,
+				},
+			},
+		});
 	};
 
 	const currencies: { value: Currency; label: string; symbol: string }[] = [
@@ -169,7 +174,7 @@ export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
 						Expense Type
 					</label>
 					<select
-						{...register("expenseType")}
+						{...register("category")}
 						className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 					>
 						{expenseTypes.map((type) => (
@@ -207,10 +212,10 @@ export function ExpenseForm({ onSuccess }: ExpenseFormProps) {
 				</button>
 				<button
 					type="submit"
-					disabled={isSubmitting}
+					disabled={loading}
 					className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 				>
-					{isSubmitting ? "Adding..." : "Add Expense"}
+					{loading ? "Adding..." : "Add Expense"}
 				</button>
 			</div>
 		</form>

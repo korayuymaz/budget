@@ -9,15 +9,20 @@ export const authOptions: NextAuthOptions = {
 		}),
 	],
 	callbacks: {
-		async jwt({ token, user }) {
+		async jwt({ token, user, account }) {
 			if (user) {
 				token.id = user.id;
+				token.googleId = user.id; // Google ID is the same as user.id for Google provider
+			}
+			if (account?.provider === "google") {
+				token.googleId = account.providerAccountId;
 			}
 			return token;
 		},
 		async session({ session, token }) {
 			if (token && session.user) {
 				session.user.id = token.id as string;
+				session.user.googleId = token.googleId as string;
 			}
 			return session;
 		},

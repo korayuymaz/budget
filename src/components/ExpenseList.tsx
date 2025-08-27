@@ -1,16 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { apiService } from "@/services/api";
 import { Expense } from "@/types";
 import { format } from "date-fns";
 import { Calendar, DollarSign, Tag, Trash2 } from "lucide-react";
+import { GET_EXPENSES } from "@/graphql/queries";
+import { DELETE_EXPENSE } from "@/graphql/mutations";
+import { useRouter } from "next/navigation";
+import { client } from "@/app/lib/apollo";
 
 export function ExpenseList() {
 	const [expenses, setExpenses] = useState<Expense[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-
+	const router = useRouter();
 	useEffect(() => {
 		loadExpenses();
 	}, []);
@@ -18,8 +21,8 @@ export function ExpenseList() {
 	const loadExpenses = async () => {
 		try {
 			setLoading(true);
-			const data = await apiService.getExpenses();
-			setExpenses(data);
+			const { data } = await client.query({ query: GET_EXPENSES });
+			setExpenses(data.expenses);
 		} catch (err) {
 			setError("Failed to load expenses");
 			console.error("Error loading expenses:", err);
@@ -34,8 +37,12 @@ export function ExpenseList() {
 		}
 
 		try {
-			await apiService.deleteExpense(id);
+			await client.mutate({
+				mutation: DELETE_EXPENSE,
+				variables: { id },
+			});
 			setExpenses(expenses.filter((expense) => expense.id !== id));
+			router.push("/expenses");
 		} catch (err) {
 			console.error("Error deleting expense:", err);
 			alert("Failed to delete expense");
@@ -133,7 +140,7 @@ export function ExpenseList() {
 							</div>
 							<div className="flex items-center space-x-1">
 								<Tag className="h-4 w-4" />
-								<span>{getExpenseTypeLabel(expense.expenseType)}</span>
+								<span>{getExpenseTypeLabel(expense.category)}</span>
 							</div>
 							<div className="flex items-center space-x-1">
 								<Calendar className="h-4 w-4" />

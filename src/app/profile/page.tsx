@@ -4,9 +4,11 @@ import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { apiService } from "@/services/api";
 import { User, Currency } from "@/types";
 import { User as UserIcon, Settings, Globe } from "lucide-react";
+import { GET_USER } from "@/graphql/queries";
+import { UPDATE_USER } from "@/graphql/mutations";
+import { client } from "../lib/apollo";
 
 export default function ProfilePage() {
 	const { data: session, status } = useSession();
@@ -25,9 +27,9 @@ export default function ProfilePage() {
 	const loadUser = async () => {
 		try {
 			setLoading(true);
-			const data = await apiService.getUser();
-			setUser(data);
-			setPreferredCurrency(data.preferredCurrency);
+			const { data } = await client.query({ query: GET_USER });
+			setUser(data.user);
+			setPreferredCurrency(data.user.preferredCurrency);
 		} catch (err) {
 			setError("Failed to load user profile");
 			console.error("Error loading user:", err);
@@ -39,8 +41,18 @@ export default function ProfilePage() {
 	const handleCurrencyChange = async () => {
 		setSaving(true);
 		try {
-			const updatedUser = await apiService.updateUser({ preferredCurrency });
-			setUser(updatedUser);
+			const { data } = await client.mutate({
+				mutation: UPDATE_USER,
+				variables: {
+					data: {
+						preferredCurrency,
+						googleId: session?.user.googleId,
+						email: session?.user.email,
+						name: session?.user.name,
+					},
+				},
+			});
+			setUser(data.updateUsers);
 			alert("Currency preference updated successfully!");
 		} catch (err) {
 			console.error("Error updating user:", err);
@@ -145,6 +157,10 @@ export default function ProfilePage() {
 							</div>
 						</div>
 						<div className="pt-4 border-t border-gray-200">
+							<p className="text-sm text-gray-600">
+								<strong>Google ID:</strong>{" "}
+								{user?.googleId || session?.user?.googleId || "N/A"}
+							</p>
 							<p className="text-sm text-gray-600">
 								<strong>Account created:</strong>{" "}
 								{user ? new Date(user.createdAt).toLocaleDateString() : "N/A"}
