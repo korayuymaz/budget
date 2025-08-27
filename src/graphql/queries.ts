@@ -30,22 +30,11 @@ export const GET_EARNINGS = gql`
 	}
 `;
 
-export const GET_USER = gql`
-	query GetUser {
-		user {
-			googleId
-			name
-			email
-			preferredCurrency
-			createdAt
-			updatedAt
-		}
-	}
-`;
-
 export const GET_USER_BY_ID = gql`
-	query GetUserById($googleId: String!) {
-		user(googleId: $googleId) {
+	query GetUserById($email: String!) {
+		user(email: $email) {
+			id
+			googleId
 			name
 			email
 			preferredCurrency

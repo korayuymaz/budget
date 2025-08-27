@@ -65,8 +65,8 @@ export const DELETE_EARNING = gql`
 `;
 
 export const CREATE_USER = gql`
-	mutation CreateUser($data: UsersInput!) {
-		createUsers(data: $data) {
+	mutation CreateUser($user: UserInput!) {
+		createUser(user: $user) {
 			googleId
 			email
 			name
@@ -76,8 +76,8 @@ export const CREATE_USER = gql`
 `;
 
 export const UPDATE_USER = gql`
-	mutation UpdateUser($data: UsersInput!) {
-		updateUsers(data: $data) {
+	mutation UpdateUser($user: UserInput!) {
+		updateUser(user: $user) {
 			googleId
 			email
 			name

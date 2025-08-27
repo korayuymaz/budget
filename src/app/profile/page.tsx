@@ -4,62 +4,34 @@ import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { User, Currency } from "@/types";
+import { Currency } from "@/types";
 import { User as UserIcon, Settings, Globe } from "lucide-react";
-import { GET_USER } from "@/graphql/queries";
+import { GET_USER_BY_ID } from "@/graphql/queries";
 import { UPDATE_USER } from "@/graphql/mutations";
 import { client } from "../lib/apollo";
+import { useQuery } from "@apollo/client";
+import Image from "next/image";
 
 export default function ProfilePage() {
 	const { data: session, status } = useSession();
-	const [user, setUser] = useState<User | null>(null);
-	const [loading, setLoading] = useState(true);
+	const {
+		data: user,
+		loading,
+		error,
+	} = useQuery(GET_USER_BY_ID, {
+		variables: { email: session?.user.email },
+	});
 	const [saving, setSaving] = useState(false);
-	const [error, setError] = useState<string | null>(null);
 	const [preferredCurrency, setPreferredCurrency] = useState<Currency>("USD");
 
 	useEffect(() => {
 		if (session) {
-			loadUser();
+			setPreferredCurrency(user?.preferredCurrency);
 		}
-	}, [session]);
-
-	const loadUser = async () => {
-		try {
-			setLoading(true);
-			const { data } = await client.query({ query: GET_USER });
-			setUser(data.user);
-			setPreferredCurrency(data.user.preferredCurrency);
-		} catch (err) {
-			setError("Failed to load user profile");
-			console.error("Error loading user:", err);
-		} finally {
-			setLoading(false);
-		}
-	};
+	}, [session, user]);
 
 	const handleCurrencyChange = async () => {
 		setSaving(true);
-		try {
-			const { data } = await client.mutate({
-				mutation: UPDATE_USER,
-				variables: {
-					data: {
-						preferredCurrency,
-						googleId: session?.user.googleId,
-						email: session?.user.email,
-						name: session?.user.name,
-					},
-				},
-			});
-			setUser(data.updateUsers);
-			alert("Currency preference updated successfully!");
-		} catch (err) {
-			console.error("Error updating user:", err);
-			alert("Failed to update currency preference");
-		} finally {
-			setSaving(false);
-		}
 	};
 
 	const currencies: { value: Currency; label: string; symbol: string }[] = [
@@ -110,9 +82,11 @@ export default function ProfilePage() {
 					</p>
 				</div>
 				<div className="text-center py-8">
-					<p className="text-red-600">{error}</p>
+					<p className="text-red-600">{error.message}</p>
 					<button
-						onClick={loadUser}
+						onClick={() => {
+							window.location.reload();
+						}}
 						className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
 					>
 						Retry
@@ -143,9 +117,11 @@ export default function ProfilePage() {
 					<CardContent className="space-y-4">
 						<div className="flex items-center space-x-4">
 							{session.user?.image && (
-								<img
+								<Image
 									src={session.user.image}
 									alt={session.user.name || "User"}
+									width={64}
+									height={64}
 									className="h-16 w-16 rounded-full"
 								/>
 							)}

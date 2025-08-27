@@ -3,9 +3,43 @@
 import { useSession, signIn } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { Wallet, LogIn } from "lucide-react";
+import { useMutation, useQuery } from "@apollo/client";
+import { GET_USER_BY_ID } from "@/graphql/queries";
+import { CREATE_USER } from "@/graphql/mutations";
 
 export default function SignInPage() {
 	const { data: session, status } = useSession();
+	const { data: user, loading: userLoading } = useQuery(GET_USER_BY_ID, {
+		variables: { id: session?.user.id },
+	});
+
+	// Utility function to handle user creation/update
+	const [createUser] = useMutation(CREATE_USER, {
+		onCompleted: () => {
+			redirect("/");
+		},
+	});
+
+	const handleUserInDatabase = () => {
+		createUser({
+			variables: {
+				user: {
+					googleId: session?.user?.googleId,
+					email: session?.user?.email,
+					name: session?.user?.name,
+					preferredCurrency: "TRY",
+				},
+			},
+		});
+	};
+
+	if (userLoading) {
+		return <div>Loading...</div>;
+	}
+
+	if (user) {
+		redirect("/");
+	}
 
 	if (status === "loading") {
 		return (
@@ -16,7 +50,10 @@ export default function SignInPage() {
 	}
 
 	if (session) {
-		redirect("/");
+		if (!user) {
+			handleUserInDatabase();
+			redirect("/");
+		}
 	}
 
 	return (
