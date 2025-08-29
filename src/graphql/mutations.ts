@@ -60,7 +60,7 @@ export const UPDATE_EARNING = gql`
 
 export const DELETE_EARNING = gql`
 	mutation DeleteEarning($id: ID!) {
-		deleteEarning(id: $id)
+		deleteEarnings(id: $id)
 	}
 `;
 

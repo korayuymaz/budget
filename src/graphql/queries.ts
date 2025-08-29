@@ -1,8 +1,8 @@
 import { gql } from "@apollo/client";
 
 export const GET_EXPENSES = gql`
-	query GetExpenses {
-		expenses {
+	query GetExpenses($userId: ID!) {
+		expenses(userId: $userId) {
 			id
 			description
 			amount
@@ -15,8 +15,8 @@ export const GET_EXPENSES = gql`
 `;
 
 export const GET_EARNINGS = gql`
-	query GetEarnings {
-		earnings {
+	query GetEarnings($userId: ID!) {
+		earnings(userId: $userId) {
 			id
 			description
 			amount
