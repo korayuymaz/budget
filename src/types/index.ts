@@ -45,7 +45,7 @@ export interface MonthlyBreakdown {
 	month: string;
 	earnings: number;
 	expenses: number;
-	netAmount: number;
+	net: number;
 }
 
 export type Currency = "USD" | "EUR" | "GBP" | "TRY" | "JPY" | "CAD" | "AUD";

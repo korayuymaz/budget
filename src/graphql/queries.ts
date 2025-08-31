@@ -63,3 +63,20 @@ export const GET_EXPENSES_MONTHLY = gql`
 		}
 	}
 `;
+
+export const GET_SUMMARY = gql`
+	query GetSummary($userId: ID!, $currency: String!) {
+		summary(userId: $userId, currency: $currency) {
+			totalEarnings
+			totalExpenses
+			netAmount
+			currency
+			monthlyBreakdown {
+				month
+				earnings
+				expenses
+				net
+			}
+		}
+	}
+`;

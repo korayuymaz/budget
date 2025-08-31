@@ -1,38 +1,32 @@
 "use client";
 
-import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useEffect, useContext, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { apiService } from "@/services/api";
-import { Summary } from "@/types";
+
 import { TrendingUp, TrendingDown, DollarSign, BarChart3 } from "lucide-react";
 import Loading from "@/components/ui/Loading";
+import { UserContext } from "@/components/SessionProvider";
+import { useQuery } from "@apollo/client";
+import { GET_SUMMARY } from "@/graphql/queries";
+import { Summary } from "@/types";
 
 export default function SummaryPage() {
-	const { data: session, status } = useSession();
 	const [summary, setSummary] = useState<Summary | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
+	const { user } = useContext(UserContext);
+	const { data, loading, error } = useQuery(GET_SUMMARY, {
+		variables: {
+			userId: user?.id,
+			currency: user?.preferredCurrency || "USD",
+		},
+		skip: !user?.id, // Skip the query if user doesn't exist or doesn't have an ID
+		fetchPolicy: "cache-and-network", // This ensures fresh data is fetched
+	});
 
 	useEffect(() => {
-		if (session) {
-			loadSummary();
+		if (data?.summary) {
+			setSummary(data.summary);
 		}
-	}, [session]);
-
-	const loadSummary = async () => {
-		try {
-			setLoading(true);
-			const data = await apiService.getSummary();
-			setSummary(data);
-		} catch (err) {
-			setError("Failed to load summary");
-			console.error("Error loading summary:", err);
-		} finally {
-			setLoading(false);
-		}
-	};
+	}, [data]);
 
 	const getCurrencySymbol = (currency: string) => {
 		const symbols: Record<string, string> = {
@@ -47,12 +41,16 @@ export default function SummaryPage() {
 		return symbols[currency] || currency;
 	};
 
-	if (status === "loading") {
+	if (loading) {
 		return <Loading />;
 	}
 
-	if (!session) {
-		redirect("/auth/signin");
+	if (!user) {
+		return (
+			<div className="flex items-center justify-center py-8">
+				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+			</div>
+		);
 	}
 
 	if (loading) {
@@ -85,9 +83,11 @@ export default function SummaryPage() {
 					</p>
 				</div>
 				<div className="text-center py-8">
-					<p className="text-red-600">{error}</p>
+					<p className="text-red-600">{error.message}</p>
 					<button
-						onClick={loadSummary}
+						onClick={() => {
+							window.location.reload();
+						}}
 						className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
 					>
 						Retry
@@ -197,16 +197,15 @@ export default function SummaryPage() {
 														</span>
 													</div>
 													<div className="flex items-center space-x-1">
-														<DollarSign className="h-4 w-4 text-blue-600" />
 														<span
 															className={
-																month.netAmount >= 0
+																month.net >= 0
 																	? "text-blue-600"
 																	: "text-red-600"
 															}
 														>
 															{getCurrencySymbol(summary.currency)}
-															{month.netAmount.toFixed(2)}
+															{month.net.toFixed(2)}
 														</span>
 													</div>
 												</div>
