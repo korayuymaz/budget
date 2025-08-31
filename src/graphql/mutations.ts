@@ -1,11 +1,12 @@
 import { gql } from "@apollo/client";
 
 export const CREATE_EXPENSE = gql`
-	mutation CreateExpense($data: CreateExpenseInput!) {
-		createExpense(data: $data) {
+	mutation CreateExpense($expenses: ExpensesInput!) {
+		createExpenses(expenses: $expenses) {
 			id
 			description
 			amount
+			userId
 			currency
 			date
 			category
@@ -20,6 +21,7 @@ export const UPDATE_EXPENSE = gql`
 			id
 			description
 			amount
+			userId
 			currency
 			date
 			category
@@ -30,7 +32,7 @@ export const UPDATE_EXPENSE = gql`
 
 export const DELETE_EXPENSE = gql`
 	mutation DeleteExpense($id: ID!) {
-		deleteExpense(id: $id)
+		deleteExpenses(id: $id)
 	}
 `;
 

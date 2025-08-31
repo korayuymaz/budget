@@ -6,6 +6,7 @@ import { Wallet, LogIn } from "lucide-react";
 import { useMutation, useQuery } from "@apollo/client";
 import { GET_USER_BY_ID } from "@/graphql/queries";
 import { CREATE_USER } from "@/graphql/mutations";
+import Loading from "@/components/Loading";
 
 export default function SignInPage() {
 	const { data: session, status } = useSession();
@@ -42,11 +43,7 @@ export default function SignInPage() {
 	}
 
 	if (status === "loading") {
-		return (
-			<div className="flex items-center justify-center min-h-screen">
-				<div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-			</div>
-		);
+		return <Loading />;
 	}
 
 	if (session) {

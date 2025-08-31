@@ -48,7 +48,6 @@ export function EarningForm() {
 	});
 
 	const onSubmit = (data: EarningFormData) => {
-		console.log("myData:", data);
 		createEarning({
 			variables: { earnings: { ...data, userId: user?.id } },
 		});

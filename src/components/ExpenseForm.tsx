@@ -1,5 +1,6 @@
 "use client";
 
+import { useContext, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -7,8 +8,8 @@ import { Currency, ExpenseType } from "@/types";
 import { Calendar, DollarSign, FileText, Tag } from "lucide-react";
 import { CREATE_EXPENSE } from "@/graphql/mutations";
 import { GET_EXPENSES } from "@/graphql/queries";
-import { useSession } from "next-auth/react";
 import { ApolloError, useMutation } from "@apollo/client";
+import { UserContext } from "./SessionProvider";
 
 const expenseSchema = z.object({
 	description: z.string().min(1, "Description is required"),
@@ -33,7 +34,7 @@ const expenseSchema = z.object({
 type ExpenseFormData = z.infer<typeof expenseSchema>;
 
 export function ExpenseForm() {
-	const { data: session } = useSession();
+	const { user } = useContext(UserContext);
 
 	const {
 		register,
@@ -50,24 +51,21 @@ export function ExpenseForm() {
 		},
 	});
 
-	const [createExpense, { loading }] = useMutation(CREATE_EXPENSE, {
+	const [isSubmitting, setIsSubmitting] = useState(false);
+
+	const [createExpense] = useMutation(CREATE_EXPENSE, {
 		onCompleted: () => {
-			reset();
+			setIsSubmitting(false);
 		},
-		refetchQueries: [GET_EXPENSES],
 		onError: (error: ApolloError) => {
 			console.error("Failed to create expense:", error);
 		},
+		refetchQueries: [GET_EXPENSES],
 	});
 
 	const onSubmit = (formData: ExpenseFormData) => {
 		createExpense({
-			variables: { expenses: { ...formData } },
-			context: {
-				headers: {
-					"x-user-email": session?.user?.email,
-				},
-			},
+			variables: { expenses: { ...formData, userId: user?.id } },
 		});
 	};
 
@@ -106,7 +104,7 @@ export function ExpenseForm() {
 					<input
 						type="text"
 						{...register("description")}
-						className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						className="text-black w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 						placeholder="Enter expense description"
 					/>
 					{errors.description && (
@@ -126,7 +124,7 @@ export function ExpenseForm() {
 						type="number"
 						step="0.01"
 						{...register("amount", { valueAsNumber: true })}
-						className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						className="text-black w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 						placeholder="0.00"
 					/>
 					{errors.amount && (
@@ -141,7 +139,7 @@ export function ExpenseForm() {
 					</label>
 					<select
 						{...register("currency")}
-						className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						className="text-black w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 					>
 						{currencies.map((currency) => (
 							<option key={currency.value} value={currency.value}>
@@ -160,7 +158,7 @@ export function ExpenseForm() {
 					<input
 						type="date"
 						{...register("date")}
-						className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						className="text-black w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 					/>
 					{errors.date && (
 						<p className="text-red-600 text-sm mt-1">{errors.date.message}</p>
@@ -175,7 +173,7 @@ export function ExpenseForm() {
 					</label>
 					<select
 						{...register("category")}
-						className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						className="text-black w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 					>
 						{expenseTypes.map((type) => (
 							<option key={type.value} value={type.value}>
@@ -212,10 +210,10 @@ export function ExpenseForm() {
 				</button>
 				<button
 					type="submit"
-					disabled={loading}
+					disabled={isSubmitting}
 					className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 				>
-					{loading ? "Adding..." : "Add Expense"}
+					{isSubmitting ? "Adding..." : "Add Expense"}
 				</button>
 			</div>
 		</form>
