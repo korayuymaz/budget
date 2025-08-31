@@ -6,13 +6,16 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ExpenseForm } from "@/components/ExpenseForm";
 import { ExpenseList } from "@/components/ExpenseList";
-import { Wallet, Plus, X } from "lucide-react";
+import { Wallet } from "lucide-react";
 import OpenCloseForm from "@/components/ui/OpenCloseForm";
 import Loading from "@/components/ui/Loading";
+import months from "@/data/months";
+import MonthSelect from "@/components/ui/MonthSelect";
 
 export default function ExpensesPage() {
 	const { data: session, status } = useSession();
 	const [showForm, setShowForm] = useState(false);
+	const [month, setMonth] = useState(months[new Date().getMonth()].value);
 
 	if (status === "loading") {
 		return <Loading />;
@@ -54,11 +57,15 @@ export default function ExpensesPage() {
 			)}
 
 			<Card>
-				<CardHeader>
+				<CardHeader className="flex items-center justify-between">
 					<CardTitle>Your Expenses</CardTitle>
+					<div className="flex items-center space-x-2">
+						<span>Month:</span>
+						<MonthSelect month={month} setMonth={setMonth} />
+					</div>
 				</CardHeader>
 				<CardContent>
-					<ExpenseList />
+					<ExpenseList month={month} />
 				</CardContent>
 			</Card>
 		</div>

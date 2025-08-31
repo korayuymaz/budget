@@ -5,22 +5,26 @@ import { Earning } from "@/types";
 import { format } from "date-fns";
 import { Trash2 } from "lucide-react";
 import { useMutation, useQuery } from "@apollo/client";
-import { GET_EARNINGS } from "@/graphql/queries";
+import { GET_EARNINGS_MONTHLY } from "@/graphql/queries";
 import { DELETE_EARNING } from "@/graphql/mutations";
 import { UserContext } from "./SessionProvider";
 import { Row } from "@tanstack/react-table";
 import { DataTable } from "./ui/DataTable";
+import { getCurrencySymbol } from "@/utils/getCurrencySymbol";
 
 type DisplayEarning = Omit<Earning, "date"> & { date: string };
 
-export function EarningList() {
+export function EarningList({ month }: { month: string }) {
 	const [earnings, setEarnings] = useState<Earning[]>([]);
 	const [displayEarnings, setDisplayEarnings] = useState<DisplayEarning[]>([]);
 	const { user } = useContext(UserContext);
 
 	// Only execute the query if user exists and has an ID
-	const { data, loading, error } = useQuery(GET_EARNINGS, {
-		variables: { userId: user?.id },
+	const { data, loading, error } = useQuery(GET_EARNINGS_MONTHLY, {
+		variables: {
+			userId: user?.id,
+			month: month,
+		},
 		skip: !user?.id, // Skip the query if user doesn't exist or doesn't have an ID
 		fetchPolicy: "cache-and-network", // This ensures fresh data is fetched
 	});
@@ -35,11 +39,11 @@ export function EarningList() {
 	};
 
 	useEffect(() => {
-		if (data?.earnings) {
-			setEarnings(data.earnings);
-			setDisplayEarnings(transformData(data.earnings));
+		if (data?.earningsMonthly) {
+			setEarnings(data.earningsMonthly);
+			setDisplayEarnings(transformData(data.earningsMonthly));
 		}
-	}, [data]);
+	}, [data, month]);
 
 	const handleDelete = async (id: string) => {
 		if (!confirm("Are you sure you want to delete this earning?")) {
@@ -113,6 +117,13 @@ export function EarningList() {
 		{
 			header: "Amount",
 			accessorKey: "amount",
+			cell: ({ row }: { row: Row<DisplayEarning> }) => {
+				return (
+					<span>
+						{getCurrencySymbol(row.original.currency)} {row.original.amount}
+					</span>
+				);
+			},
 		},
 		{
 			header: "Date",

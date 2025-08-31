@@ -4,22 +4,26 @@ import { useState, useEffect, useContext } from "react";
 import { Expense } from "@/types";
 import { format } from "date-fns";
 import { Trash2 } from "lucide-react";
-import { GET_EXPENSES } from "@/graphql/queries";
+import { GET_EXPENSES_MONTHLY } from "@/graphql/queries";
 import { DELETE_EXPENSE } from "@/graphql/mutations";
 import { useMutation, useQuery } from "@apollo/client";
 import { UserContext } from "./SessionProvider";
 import { DataTable } from "./ui/DataTable";
 import { Row } from "@tanstack/react-table";
+import { getCurrencySymbol } from "@/utils/getCurrencySymbol";
 
 type DisplayExpense = Omit<Expense, "date"> & { date: string };
 
-export function ExpenseList() {
+export function ExpenseList({ month }: { month: string }) {
 	const [expenses, setExpenses] = useState<Expense[]>([]);
 	const [displayExpenses, setDisplayExpenses] = useState<DisplayExpense[]>([]);
 	const { user } = useContext(UserContext);
 
-	const { data, loading, error } = useQuery(GET_EXPENSES, {
-		variables: { userId: user?.id },
+	const { data, loading, error } = useQuery(GET_EXPENSES_MONTHLY, {
+		variables: {
+			userId: user?.id,
+			month: month,
+		},
 		skip: !user?.id,
 	});
 
@@ -33,11 +37,11 @@ export function ExpenseList() {
 	};
 
 	useEffect(() => {
-		if (data?.expenses) {
-			setExpenses(data.expenses);
-			setDisplayExpenses(transformData(data.expenses));
+		if (data?.expensesMonthly) {
+			setExpenses(data.expensesMonthly);
+			setDisplayExpenses(transformData(data.expensesMonthly));
 		}
-	}, [data]);
+	}, [data, month]);
 
 	const handleDelete = async (id: string) => {
 		try {
@@ -106,6 +110,13 @@ export function ExpenseList() {
 		{
 			header: "Amount",
 			accessorKey: "amount",
+			cell: ({ row }: { row: Row<DisplayExpense> }) => {
+				return (
+					<span>
+						{getCurrencySymbol(row.original.currency)} {row.original.amount}
+					</span>
+				);
+			},
 		},
 		{
 			header: "Date",

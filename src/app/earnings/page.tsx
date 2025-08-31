@@ -9,10 +9,13 @@ import { EarningList } from "@/components/EarningList";
 import { TrendingUp } from "lucide-react";
 import OpenCloseForm from "@/components/ui/OpenCloseForm";
 import Loading from "@/components/ui/Loading";
+import MonthSelect from "@/components/ui/MonthSelect";
+import months from "@/data/months";
 
 export default function EarningsPage() {
 	const { data: session, status } = useSession();
 	const [showForm, setShowForm] = useState(false);
+	const [month, setMonth] = useState(months[new Date().getMonth()].value);
 
 	if (status === "loading") {
 		return <Loading />;
@@ -52,11 +55,15 @@ export default function EarningsPage() {
 			)}
 
 			<Card>
-				<CardHeader>
+				<CardHeader className="flex items-center justify-between">
 					<CardTitle>Your Earnings</CardTitle>
+					<div className="flex items-center space-x-2">
+						<span>Month:</span>
+						<MonthSelect month={month} setMonth={setMonth} />
+					</div>
 				</CardHeader>
 				<CardContent>
-					<EarningList />
+					<EarningList month={month} />
 				</CardContent>
 			</Card>
 		</div>
