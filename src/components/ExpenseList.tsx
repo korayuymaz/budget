@@ -3,7 +3,7 @@
 import { useState, useEffect, useContext } from "react";
 import { Expense } from "@/types";
 import { format } from "date-fns";
-import { Calendar, DollarSign, Tag, Trash2 } from "lucide-react";
+import { Calendar, Tag, Trash2 } from "lucide-react";
 import { GET_EXPENSES } from "@/graphql/queries";
 import { DELETE_EXPENSE } from "@/graphql/mutations";
 import { useMutation, useQuery } from "@apollo/client";
@@ -106,7 +106,6 @@ export function ExpenseList() {
 	if (expenses.length === 0) {
 		return (
 			<div className="text-center py-8">
-				<DollarSign className="h-12 w-12 mx-auto mb-4 text-gray-300" />
 				<p className="text-gray-500">No expenses recorded yet</p>
 				<p className="text-sm text-gray-400">
 					Start adding expenses to see them here
@@ -135,7 +134,6 @@ export function ExpenseList() {
 						</div>
 						<div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
 							<div className="flex items-center space-x-1">
-								<DollarSign className="h-4 w-4" />
 								<span>
 									{getCurrencySymbol(expense.currency)}
 									{expense.amount.toFixed(2)}

@@ -2,16 +2,19 @@
 
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Currency } from "@/types";
 import { User as UserIcon, Settings, Globe } from "lucide-react";
 import { GET_USER_BY_ID } from "@/graphql/queries";
-import { useQuery } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 import Image from "next/image";
+import { UPDATE_USER } from "@/graphql/mutations";
+import { UserContext } from "@/components/SessionProvider";
 
 export default function ProfilePage() {
 	const { data: session, status } = useSession();
+	const userData = useContext(UserContext);
 	const {
 		data: user,
 		loading,
@@ -24,12 +27,23 @@ export default function ProfilePage() {
 
 	useEffect(() => {
 		if (session) {
-			setPreferredCurrency(user?.preferredCurrency);
+			setPreferredCurrency(userData?.user?.preferredCurrency || "USD");
 		}
-	}, [session, user]);
+	}, [userData, session]);
+
+	const [updateUser] = useMutation(UPDATE_USER);
 
 	const handleCurrencyChange = async () => {
 		setSaving(true);
+		updateUser({
+			variables: {
+				user: {
+					preferredCurrency: preferredCurrency,
+					id: userData?.user?.id,
+				},
+			},
+		});
+		setSaving(false);
 	};
 
 	const currencies: { value: Currency; label: string; symbol: string }[] = [
@@ -166,7 +180,7 @@ export default function ProfilePage() {
 								onChange={(e) =>
 									setPreferredCurrency(e.target.value as Currency)
 								}
-								className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+								className="text-black w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 							>
 								{currencies.map((currency) => (
 									<option key={currency.value} value={currency.value}>

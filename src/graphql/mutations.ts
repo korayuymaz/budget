@@ -78,8 +78,9 @@ export const CREATE_USER = gql`
 `;
 
 export const UPDATE_USER = gql`
-	mutation UpdateUser($user: UserInput!) {
+	mutation UpdateUser($user: UpdateUserInput!) {
 		updateUser(user: $user) {
+			id
 			googleId
 			email
 			name
