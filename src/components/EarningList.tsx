@@ -3,14 +3,19 @@
 import { useState, useEffect, useContext } from "react";
 import { Earning } from "@/types";
 import { format } from "date-fns";
-import { Calendar, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useMutation, useQuery } from "@apollo/client";
 import { GET_EARNINGS } from "@/graphql/queries";
 import { DELETE_EARNING } from "@/graphql/mutations";
 import { UserContext } from "./SessionProvider";
+import { Row } from "@tanstack/react-table";
+import { DataTable } from "./ui/DataTable";
+
+type DisplayEarning = Omit<Earning, "date"> & { date: string };
 
 export function EarningList() {
 	const [earnings, setEarnings] = useState<Earning[]>([]);
+	const [displayEarnings, setDisplayEarnings] = useState<DisplayEarning[]>([]);
 	const { user } = useContext(UserContext);
 
 	// Only execute the query if user exists and has an ID
@@ -22,9 +27,17 @@ export function EarningList() {
 
 	const [deleteEarning] = useMutation(DELETE_EARNING);
 
+	const transformData = (data: Earning[]): DisplayEarning[] => {
+		return data.map((earning) => ({
+			...earning,
+			date: format(new Date(earning.date), "dd MMM yyyy"),
+		}));
+	};
+
 	useEffect(() => {
 		if (data?.earnings) {
 			setEarnings(data.earnings);
+			setDisplayEarnings(transformData(data.earnings));
 		}
 	}, [data]);
 
@@ -47,19 +60,6 @@ export function EarningList() {
 			console.error("Error deleting earning:", err);
 			alert("Failed to delete earning");
 		}
-	};
-
-	const getCurrencySymbol = (currency: string) => {
-		const symbols: Record<string, string> = {
-			USD: "$",
-			EUR: "€",
-			GBP: "£",
-			TRY: "₺",
-			JPY: "¥",
-			CAD: "C$",
-			AUD: "A$",
-		};
-		return symbols[currency] || currency;
 	};
 
 	// Show loading state while user is being fetched or earnings are loading
@@ -93,7 +93,7 @@ export function EarningList() {
 		);
 	}
 
-	if (earnings.length === 0) {
+	if (displayEarnings.length === 0) {
 		return (
 			<div className="text-center py-8">
 				<p className="text-gray-500">No earnings recorded yet</p>
@@ -104,39 +104,32 @@ export function EarningList() {
 		);
 	}
 
-	return (
-		<div className="space-y-4">
-			{earnings.map((earning) => (
-				<div
-					key={earning.id}
-					className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
-				>
-					<div className="flex-1">
-						<h3 className="font-medium text-gray-900">{earning.description}</h3>
-						<div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
-							<div className="flex items-center space-x-1">
-								<span>
-									{getCurrencySymbol(earning.currency)}
-									{earning.amount.toFixed(2)}
-								</span>
-							</div>
-							<div className="flex items-center space-x-1">
-								<Calendar className="h-4 w-4" />
-								<span>{format(new Date(earning.date), "MMM dd, yyyy")}</span>
-							</div>
-						</div>
-					</div>
-					<div className="flex items-center space-x-2">
-						<button
-							onClick={() => handleDelete(earning.id)}
-							className="p-2 text-red-600 hover:bg-red-100 rounded-md transition-colors"
-							title="Delete earning"
-						>
-							<Trash2 className="h-4 w-4" />
-						</button>
-					</div>
-				</div>
-			))}
-		</div>
-	);
+	const columns = [
+		{
+			header: "Description",
+			accessorKey: "description",
+		},
+
+		{
+			header: "Amount",
+			accessorKey: "amount",
+		},
+		{
+			header: "Date",
+			accessorKey: "date",
+		},
+		{
+			header: "Actions",
+			accessorKey: "actions",
+			cell: ({ row }: { row: Row<DisplayEarning> }) => {
+				return (
+					<button onClick={() => handleDelete(row.original.id)}>
+						<Trash2 className="h-4 w-4 text-red-500" />
+					</button>
+				);
+			},
+		},
+	];
+
+	return <DataTable columns={columns} data={displayEarnings} />;
 }

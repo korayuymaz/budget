@@ -3,14 +3,19 @@
 import { useState, useEffect, useContext } from "react";
 import { Expense } from "@/types";
 import { format } from "date-fns";
-import { Calendar, Tag, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { GET_EXPENSES } from "@/graphql/queries";
 import { DELETE_EXPENSE } from "@/graphql/mutations";
 import { useMutation, useQuery } from "@apollo/client";
 import { UserContext } from "./SessionProvider";
+import { DataTable } from "./ui/DataTable";
+import { Row } from "@tanstack/react-table";
+
+type DisplayExpense = Omit<Expense, "date"> & { date: string };
 
 export function ExpenseList() {
 	const [expenses, setExpenses] = useState<Expense[]>([]);
+	const [displayExpenses, setDisplayExpenses] = useState<DisplayExpense[]>([]);
 	const { user } = useContext(UserContext);
 
 	const { data, loading, error } = useQuery(GET_EXPENSES, {
@@ -20,9 +25,17 @@ export function ExpenseList() {
 
 	const [deleteExpense] = useMutation(DELETE_EXPENSE);
 
+	const transformData = (data: Expense[]): DisplayExpense[] => {
+		return data.map((expense) => ({
+			...expense,
+			date: format(new Date(expense.date), "dd MMM yyyy"),
+		}));
+	};
+
 	useEffect(() => {
 		if (data?.expenses) {
 			setExpenses(data.expenses);
+			setDisplayExpenses(transformData(data.expenses));
 		}
 	}, [data]);
 
@@ -42,35 +55,6 @@ export function ExpenseList() {
 			console.error("Error deleting expense:", err);
 			alert("Failed to delete expense");
 		}
-	};
-
-	const getCurrencySymbol = (currency: string) => {
-		const symbols: Record<string, string> = {
-			USD: "$",
-			EUR: "€",
-			GBP: "£",
-			TRY: "₺",
-			JPY: "¥",
-			CAD: "C$",
-			AUD: "A$",
-		};
-		return symbols[currency] || currency;
-	};
-
-	const getExpenseTypeLabel = (type: string) => {
-		const types: Record<string, string> = {
-			FOOD: "Food & Dining",
-			TRANSPORTATION: "Transportation",
-			HOUSING: "Housing",
-			UTILITIES: "Utilities",
-			ENTERTAINMENT: "Entertainment",
-			HEALTHCARE: "Healthcare",
-			EDUCATION: "Education",
-			SHOPPING: "Shopping",
-			INSURANCE: "Insurance",
-			OTHER: "Other",
-		};
-		return types[type] || type;
 	};
 
 	if (!user) {
@@ -114,52 +98,42 @@ export function ExpenseList() {
 		);
 	}
 
-	return (
-		<div className="space-y-4">
-			{expenses.map((expense) => (
-				<div
-					key={expense.id}
-					className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
-				>
-					<div className="flex-1">
-						<div className="flex items-center space-x-3">
-							<h3 className="font-medium text-gray-900">
-								{expense.description}
-							</h3>
-							{expense.isFixed && (
-								<span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-									Fixed
-								</span>
-							)}
-						</div>
-						<div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
-							<div className="flex items-center space-x-1">
-								<span>
-									{getCurrencySymbol(expense.currency)}
-									{expense.amount.toFixed(2)}
-								</span>
-							</div>
-							<div className="flex items-center space-x-1">
-								<Tag className="h-4 w-4" />
-								<span>{getExpenseTypeLabel(expense.category)}</span>
-							</div>
-							<div className="flex items-center space-x-1">
-								<Calendar className="h-4 w-4" />
-								<span>{format(new Date(expense.date), "MMM dd, yyyy")}</span>
-							</div>
-						</div>
-					</div>
-					<div className="flex items-center space-x-2">
-						<button
-							onClick={() => handleDelete(expense.id)}
-							className="p-2 text-red-600 hover:bg-red-100 rounded-md transition-colors"
-							title="Delete expense"
-						>
-							<Trash2 className="h-4 w-4" />
-						</button>
-					</div>
-				</div>
-			))}
-		</div>
-	);
+	const columns = [
+		{
+			header: "Description",
+			accessorKey: "description",
+		},
+		{
+			header: "Amount",
+			accessorKey: "amount",
+		},
+		{
+			header: "Date",
+			accessorKey: "date",
+		},
+		{
+			header: "Category",
+			accessorKey: "category",
+		},
+		{
+			header: "Fixed",
+			accessorKey: "isFixed",
+			cell: ({ row }: { row: Row<DisplayExpense> }) => {
+				return <span>{row.original.isFixed ? "Yes" : "No"}</span>;
+			},
+		},
+		{
+			header: "Actions",
+			accessorKey: "actions",
+			cell: ({ row }: { row: Row<DisplayExpense> }) => {
+				return (
+					<button onClick={() => handleDelete(row.original.id)}>
+						<Trash2 className="h-4 w-4 text-red-500" />
+					</button>
+				);
+			},
+		},
+	];
+
+	return <DataTable columns={columns} data={displayExpenses} />;
 }
