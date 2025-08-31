@@ -6,7 +6,7 @@ import { Wallet, LogIn } from "lucide-react";
 import { useMutation, useQuery } from "@apollo/client";
 import { GET_USER_BY_ID } from "@/graphql/queries";
 import { CREATE_USER } from "@/graphql/mutations";
-import Loading from "@/components/Loading";
+import Loading from "@/components/ui/Loading";
 
 export default function SignInPage() {
 	const { data: session, status } = useSession();

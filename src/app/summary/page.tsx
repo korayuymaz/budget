@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { apiService } from "@/services/api";
 import { Summary } from "@/types";
 import { TrendingUp, TrendingDown, DollarSign, BarChart3 } from "lucide-react";
-import Loading from "@/components/Loading";
+import Loading from "@/components/ui/Loading";
 
 export default function SummaryPage() {
 	const { data: session, status } = useSession();

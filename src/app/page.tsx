@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Wallet, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
-import Loading from "@/components/Loading";
+import Loading from "@/components/ui/Loading";
 
 export default function Dashboard() {
 	const { data: session, status } = useSession();

@@ -7,8 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { EarningForm } from "@/components/EarningForm";
 import { EarningList } from "@/components/EarningList";
 import { TrendingUp } from "lucide-react";
-import OpenCloseForm from "@/components/OpenCloseForm";
-import Loading from "@/components/Loading";
+import OpenCloseForm from "@/components/ui/OpenCloseForm";
+import Loading from "@/components/ui/Loading";
 
 export default function EarningsPage() {
 	const { data: session, status } = useSession();

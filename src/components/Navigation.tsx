@@ -5,11 +5,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Wallet, Plus, BarChart3, User, LogIn, LogOut } from "lucide-react";
 import Image from "next/image";
+import Hamburger from "./ui/Hamburger";
+import { useState } from "react";
 
 export function Navigation() {
 	const { data: session, status } = useSession();
 	const pathname = usePathname();
-
+	const [isOpen, setIsOpen] = useState(false);
 	const isActive = (path: string) => pathname === path;
 
 	const navItems = [
@@ -55,7 +57,15 @@ export function Navigation() {
 						)}
 					</div>
 
-					<div className="flex items-center space-x-4">
+					<div className="md:hidden">
+						<Hamburger
+							isOpen={isOpen}
+							setIsOpen={setIsOpen}
+							navItems={navItems}
+						/>
+					</div>
+
+					<div className="hidden md:flex items-center space-x-4">
 						{status === "loading" ? (
 							<div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
 						) : session ? (
@@ -76,7 +86,7 @@ export function Navigation() {
 								</div>
 								<button
 									onClick={() => signOut()}
-									className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+									className="hidden md:flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
 								>
 									<LogOut className="h-4 w-4" />
 									<span className="hidden md:inline">Sign Out</span>

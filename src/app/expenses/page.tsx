@@ -7,8 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ExpenseForm } from "@/components/ExpenseForm";
 import { ExpenseList } from "@/components/ExpenseList";
 import { Wallet, Plus, X } from "lucide-react";
-import OpenCloseForm from "@/components/OpenCloseForm";
-import Loading from "@/components/Loading";
+import OpenCloseForm from "@/components/ui/OpenCloseForm";
+import Loading from "@/components/ui/Loading";
 
 export default function ExpensesPage() {
 	const { data: session, status } = useSession();
