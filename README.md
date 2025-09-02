@@ -17,10 +17,11 @@ A comprehensive budget management application built with Next.js, TypeScript, an
 
 - **Frontend**: Next.js 14, TypeScript, Tailwind CSS
 - **Authentication**: NextAuth.js with Google Provider
-- **Forms**: React Hook Form with Zod validation
+- **Database**: GraphQL with Apollo Client
 - **Icons**: Lucide React
 - **Date Handling**: date-fns
-- **API**: RESTful API service (ready for your backend)
+- **Tables**: TanStack Table (React Table)
+- **Styling**: Tailwind CSS with shadcn/ui components
 
 ## Project Structure
 
@@ -41,10 +42,9 @@ src/
 │   ├── ExpenseList.tsx   # Expense list component
 │   ├── EarningForm.tsx   # Earning form component
 │   └── EarningList.tsx   # Earning list component
-├── services/             # API services
-│   └── api.ts           # REST API service
 ├── graphql/             # GraphQL configuration
-│   └── client.ts        # GraphQL client setup
+│   ├── mutations.ts     # GraphQL mutations
+│   └── queries.ts       # GraphQL queries
 ├── types/               # TypeScript type definitions
 │   └── index.ts         # All application types
 └── lib/                 # Utility libraries
@@ -55,25 +55,28 @@ src/
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 - Google OAuth credentials
 
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd budget
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Set up environment variables**
    Create a `.env.local` file in the root directory:
+
    ```env
    # NextAuth Configuration
    NEXTAUTH_URL=http://localhost:3000
@@ -83,12 +86,12 @@ src/
    GOOGLE_CLIENT_ID=your-google-client-id-here
    GOOGLE_CLIENT_SECRET=your-google-client-secret-here
 
-   # API Configuration
-   NEXT_PUBLIC_API_URL=http://localhost:3001/api
-   NEXT_PUBLIC_GRAPHQL_URL=http://localhost:3001/graphql
+   # GraphQL Configuration
+   NEXT_PUBLIC_API_URL=http://localhost:4000/api
    ```
 
 4. **Set up Google OAuth**
+
    - Go to [Google Cloud Console](https://console.cloud.google.com/)
    - Create a new project or select an existing one
    - Enable the Google+ API
@@ -97,6 +100,7 @@ src/
    - Copy the Client ID and Client Secret to your `.env.local` file
 
 5. **Run the development server**
+
    ```bash
    npm run dev
    ```
@@ -104,36 +108,36 @@ src/
 6. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
-## API Endpoints
+## GraphQL Schema
 
-The application is designed to work with a REST API. Here are the expected endpoints:
+The application uses GraphQL for data fetching and mutations. Here are the main operations:
 
-### Expenses
-- `POST /api/expenses` - Create expense
-- `GET /api/expenses` - Get all expenses
-- `PUT /api/expenses/:id` - Update expense
-- `DELETE /api/expenses/:id` - Delete expense
+### Queries
 
-### Earnings
-- `POST /api/earnings` - Create earning
-- `GET /api/earnings` - Get all earnings
-- `PUT /api/earnings/:id` - Update earning
-- `DELETE /api/earnings/:id` - Delete earning
+- `GET_EXPENSES` - Fetch all expenses for a user
+- `GET_EXPENSES_MONTHLY` - Fetch expenses for a specific month
+- `GET_EARNINGS` - Fetch all earnings for a user
+- `GET_EARNINGS_MONTHLY` - Fetch earnings for a specific month
+- `GET_SUMMARY` - Fetch financial summary with monthly breakdown
+- `GET_USER_BY_ID` - Fetch user information
 
-### Summary
-- `GET /api/summary` - Get financial summary
+### Mutations
 
-### User
-- `GET /api/user` - Get user profile
-- `PUT /api/user` - Update user preferences
+- `CREATE_EXPENSE` - Create a new expense
+- `UPDATE_EXPENSE` - Update an existing expense
+- `DELETE_EXPENSE` - Delete an expense
+- `CREATE_EARNING` - Create a new earning
+- `UPDATE_EARNING` - Update an existing earning
+- `DELETE_EARNING` - Delete an earning
 
 ## GraphQL Support
 
-The application includes GraphQL client configuration in `src/graphql/client.ts` for future backend implementation. The GraphQL queries and mutations are ready to use when you implement the GraphQL backend.
+The application is fully integrated with GraphQL using Apollo Client. The GraphQL client is configured in `src/app/lib/apollo.ts` and provides real-time data synchronization with optimistic updates.
 
 ## Features in Detail
 
 ### Expense Management
+
 - Add variable and fixed expenses
 - Categorize expenses (Food, Transportation, Housing, etc.)
 - Set specific dates for expenses
@@ -141,18 +145,22 @@ The application includes GraphQL client configuration in `src/graphql/client.ts`
 - Mark expenses as recurring (fixed)
 
 ### Earning Management
+
 - Record income and earnings
 - Add descriptions and dates
 - Support for multiple currencies
 - Track all sources of income
 
 ### Financial Summary
+
 - Total earnings and expenses
 - Net amount calculation
-- Monthly breakdown
-- Visual representation of financial data
+- Monthly breakdown with earnings, expenses, and net amounts
+- Currency-specific calculations
+- Real-time data updates
 
 ### User Profile
+
 - View account information
 - Set preferred currency
 - Manage account settings
@@ -162,24 +170,30 @@ The application includes GraphQL client configuration in `src/graphql/client.ts`
 ## Customization
 
 ### Adding New Currencies
+
 Edit the `Currency` type in `src/types/index.ts` and update the currency arrays in the form components.
 
 ### Adding New Expense Types
+
 Edit the `ExpenseType` type in `src/types/index.ts` and update the expense type arrays in the form components.
 
 ### Styling
+
 The application uses Tailwind CSS. You can customize the design by modifying the Tailwind classes or extending the configuration in `tailwind.config.js`.
 
 ## Deployment
 
 ### Vercel (Recommended)
+
 1. Push your code to GitHub
 2. Connect your repository to Vercel
 3. Add environment variables in Vercel dashboard
 4. Deploy
 
 ### Other Platforms
+
 The application can be deployed to any platform that supports Next.js:
+
 - Netlify
 - Railway
 - DigitalOcean App Platform
@@ -204,10 +218,12 @@ If you encounter any issues or have questions, please open an issue on GitHub.
 ## Future Enhancements
 
 - [ ] Data export functionality
-- [ ] Charts and graphs
+- [ ] Charts and graphs for better data visualization
 - [ ] Budget goals and alerts
 - [ ] Receipt image upload
 - [ ] Recurring expense automation
 - [ ] Mobile app (React Native)
 - [ ] Dark mode support
 - [ ] Multi-language support
+- [ ] Advanced filtering and search
+- [ ] Data backup and sync
