@@ -7,7 +7,7 @@ import { z } from "zod";
 import { Currency } from "@/types";
 import { Calendar, DollarSign, FileText } from "lucide-react";
 import { CREATE_EARNING } from "@/graphql/mutations";
-import { GET_EARNINGS } from "@/graphql/queries";
+import { GET_EARNINGS_MONTHLY } from "@/graphql/queries";
 import { ApolloError, useMutation } from "@apollo/client";
 import { UserContext } from "./SessionProvider";
 
@@ -32,7 +32,7 @@ export function EarningForm() {
 	} = useForm<EarningFormData>({
 		resolver: zodResolver(earningSchema),
 		defaultValues: {
-			currency: "USD",
+			currency: user?.preferredCurrency || "USD",
 			date: new Date().toISOString().split("T")[0],
 		},
 	});
@@ -44,7 +44,7 @@ export function EarningForm() {
 		onError: (err: ApolloError) => {
 			console.error("Failed to create earning:", err.graphQLErrors);
 		},
-		refetchQueries: [GET_EARNINGS],
+		refetchQueries: [GET_EARNINGS_MONTHLY],
 	});
 
 	const onSubmit = (data: EarningFormData) => {
@@ -110,7 +110,6 @@ export function EarningForm() {
 					</label>
 					<select
 						{...register("currency")}
-						value={user?.preferredCurrency || "USD"}
 						className="text-black w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
 					>
 						{currencies.map((currency) => (

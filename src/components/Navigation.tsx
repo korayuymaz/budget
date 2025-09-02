@@ -18,7 +18,6 @@ export function Navigation() {
 		{ href: "/", label: "Dashboard", icon: BarChart3 },
 		{ href: "/expenses", label: "Expenses", icon: Wallet },
 		{ href: "/earnings", label: "Earnings", icon: Plus },
-		{ href: "/summary", label: "Summary", icon: BarChart3 },
 		{ href: "/profile", label: "Profile", icon: User },
 	];
 

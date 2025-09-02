@@ -149,14 +149,6 @@ export default function ProfilePage() {
 								<strong>Google ID:</strong>{" "}
 								{user?.googleId || session?.user?.googleId || "N/A"}
 							</p>
-							<p className="text-sm text-gray-600">
-								<strong>Account created:</strong>{" "}
-								{user ? new Date(user.createdAt).toLocaleDateString() : "N/A"}
-							</p>
-							<p className="text-sm text-gray-600">
-								<strong>Last updated:</strong>{" "}
-								{user ? new Date(user.updatedAt).toLocaleDateString() : "N/A"}
-							</p>
 						</div>
 					</CardContent>
 				</Card>

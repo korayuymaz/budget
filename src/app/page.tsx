@@ -1,20 +1,129 @@
 "use client";
 
-import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Wallet, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import Loading from "@/components/ui/Loading";
-
+import MonthlyBreakdown from "@/components/MonthlyBreakdown";
+import { useContext, useEffect, useState } from "react";
+import { useQuery } from "@apollo/client";
+import { GET_SUMMARY, GET_EXPENSES, GET_EARNINGS } from "@/graphql/queries";
+import { UserContext } from "@/components/SessionProvider";
+import { Earning, Expense, Summary } from "@/types";
+import { getCurrencySymbol } from "@/utils/getCurrencySymbol";
+import { Row } from "@tanstack/react-table";
+import { DataTable } from "@/components/ui/DataTable";
+import { format } from "date-fns";
 export default function Dashboard() {
-	const { data: session, status } = useSession();
+	const [summary, setSummary] = useState<Summary | null>(null);
+	const { user } = useContext(UserContext);
+	const [totalEarnings, setTotalEarnings] = useState<number>(0);
+	const [totalExpenses, setTotalExpenses] = useState<number>(0);
+	const [netAmount, setNetAmount] = useState<number>(0);
+	const [totalBalance, setTotalBalance] = useState<number>(0);
+	const [recentExpenses, setRecentExpenses] = useState<Expense[]>([]);
+	const [recentEarnings, setRecentEarnings] = useState<Earning[]>([]);
 
-	if (status === "loading") {
+	const { data: expenses, loading: expensesLoading } = useQuery(GET_EXPENSES, {
+		variables: {
+			userId: user?.id,
+		},
+		skip: !user?.id, // Skip the query if user doesn't exist or doesn't have an ID
+		fetchPolicy: "cache-and-network", // This ensures fresh data is fetched
+	});
+	const { data: earnings, loading: earningsLoading } = useQuery(GET_EARNINGS, {
+		variables: {
+			userId: user?.id,
+		},
+		skip: !user?.id, // Skip the query if user doesn't exist or doesn't have an ID
+		fetchPolicy: "cache-and-network", // This ensures fresh data is fetched
+	});
+	const { data, loading: summaryLoading } = useQuery(GET_SUMMARY, {
+		variables: {
+			userId: user?.id,
+			currency: user?.preferredCurrency || "USD",
+		},
+		skip: !user?.id, // Skip the query if user doesn't exist or doesn't have an ID
+		fetchPolicy: "cache-and-network", // This ensures fresh data is fetched
+	});
+
+	const columnsExpenses = [
+		{
+			header: "Description",
+			accessorKey: "description",
+		},
+		{
+			header: "Amount",
+			accessorKey: "amount",
+			cell: ({ row }: { row: Row<Expense> }) => {
+				return (
+					<span>
+						{getCurrencySymbol(row.original.currency)} {row.original.amount}
+					</span>
+				);
+			},
+		},
+		{
+			header: "Date",
+			accessorKey: "date",
+			cell: ({ row }: { row: Row<Expense> }) => {
+				return <span>{format(row.original.date, "MM/dd/yyyy")}</span>;
+			},
+		},
+		{
+			header: "Category",
+			accessorKey: "category",
+		},
+		{
+			header: "Fixed",
+			accessorKey: "isFixed",
+			cell: ({ row }: { row: Row<Expense> }) => {
+				return <span>{row.original.isFixed ? "Yes" : "No"}</span>;
+			},
+		},
+	];
+	const columnsEarnings = [
+		{
+			header: "Description",
+			accessorKey: "description",
+		},
+
+		{
+			header: "Amount",
+			accessorKey: "amount",
+			cell: ({ row }: { row: Row<Earning> }) => {
+				return (
+					<span>
+						{getCurrencySymbol(row.original.currency)} {row.original.amount}
+					</span>
+				);
+			},
+		},
+		{
+			header: "Date",
+			accessorKey: "date",
+			cell: ({ row }: { row: Row<Earning> }) => {
+				return <span>{format(row.original.date, "MM/dd/yyyy")}</span>;
+			},
+		},
+	];
+
+	useEffect(() => {
+		if (data?.summary) {
+			const totalNetThisMonth =
+				data.summary.monthlyBreakdown[0].earnings -
+				data.summary.monthlyBreakdown[0].expenses;
+			setSummary(data.summary);
+			setTotalEarnings(data.summary.monthlyBreakdown[0].earnings);
+			setTotalExpenses(data.summary.monthlyBreakdown[0].expenses);
+			setNetAmount(totalNetThisMonth);
+			setTotalBalance(data.summary.netAmount);
+			setRecentExpenses(expenses?.expenses || []);
+			setRecentEarnings(earnings?.earnings || []);
+		}
+	}, [data, expenses, earnings]);
+
+	if (summaryLoading || earningsLoading || expensesLoading || !user) {
 		return <Loading />;
-	}
-
-	if (!session) {
-		redirect("/auth/signin");
 	}
 
 	return (
@@ -23,8 +132,7 @@ export default function Dashboard() {
 				<div>
 					<h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
 					<p className="text-gray-600 mt-2">
-						Welcome back, {session.user?.name}! Here&apos;s your financial
-						overview.
+						Welcome back, {user?.name}! Here&apos;s your financial overview.
 					</p>
 				</div>
 			</div>
@@ -38,7 +146,10 @@ export default function Dashboard() {
 						<TrendingUp className="h-4 w-4 text-green-600" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold text-green-600">$0.00</div>
+						<div className="text-2xl font-bold text-green-600">
+							{getCurrencySymbol(summary?.currency || "USD")}
+							{totalEarnings.toFixed(2)}
+						</div>
 						<p className="text-xs text-gray-600">This month</p>
 					</CardContent>
 				</Card>
@@ -51,7 +162,10 @@ export default function Dashboard() {
 						<TrendingDown className="h-4 w-4 text-red-600" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold text-red-600">$0.00</div>
+						<div className="text-2xl font-bold text-red-600">
+							{getCurrencySymbol(summary?.currency || "USD")}
+							{totalExpenses.toFixed(2)}
+						</div>
 						<p className="text-xs text-gray-600">This month</p>
 					</CardContent>
 				</Card>
@@ -62,7 +176,10 @@ export default function Dashboard() {
 						<DollarSign className="h-4 w-4 text-blue-600" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold text-blue-600">$0.00</div>
+						<div className="text-2xl font-bold text-blue-600">
+							{getCurrencySymbol(summary?.currency || "USD")}
+							{netAmount.toFixed(2)}
+						</div>
 						<p className="text-xs text-gray-600">This month</p>
 					</CardContent>
 				</Card>
@@ -73,7 +190,10 @@ export default function Dashboard() {
 						<Wallet className="h-4 w-4 text-purple-600" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold text-purple-600">$0.00</div>
+						<div className="text-2xl font-bold text-purple-600">
+							{getCurrencySymbol(summary?.currency || "USD")}
+							{totalBalance.toFixed(2)}
+						</div>
 						<p className="text-xs text-gray-600">Overall</p>
 					</CardContent>
 				</Card>
@@ -85,13 +205,16 @@ export default function Dashboard() {
 						<CardTitle>Recent Expenses</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<div className="text-center text-gray-500 py-8">
-							<Wallet className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-							<p>No expenses recorded yet</p>
-							<p className="text-sm">
-								Start tracking your expenses to see them here
-							</p>
-						</div>
+						{recentExpenses.length > 0 ? (
+							<DataTable columns={columnsExpenses} data={recentExpenses} />
+						) : (
+							<div className="text-center text-gray-500 py-8">
+								<p>No expenses recorded yet</p>
+								<p className="text-sm">
+									Start tracking your expenses to see them here
+								</p>
+							</div>
+						)}
 					</CardContent>
 				</Card>
 
@@ -100,16 +223,20 @@ export default function Dashboard() {
 						<CardTitle>Recent Earnings</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<div className="text-center text-gray-500 py-8">
-							<TrendingUp className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-							<p>No earnings recorded yet</p>
-							<p className="text-sm">
-								Start tracking your earnings to see them here
-							</p>
-						</div>
+						{recentEarnings.length > 0 ? (
+							<DataTable columns={columnsEarnings} data={recentEarnings} />
+						) : (
+							<div className="text-center text-gray-500 py-8">
+								<p>No earnings recorded yet</p>
+								<p className="text-sm">
+									Start tracking your earnings to see them here
+								</p>
+							</div>
+						)}
 					</CardContent>
 				</Card>
 			</div>
+			{summary && <MonthlyBreakdown summary={summary} />}
 		</div>
 	);
 }

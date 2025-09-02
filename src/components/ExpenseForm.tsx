@@ -7,7 +7,7 @@ import { z } from "zod";
 import { Currency, ExpenseType } from "@/types";
 import { Calendar, DollarSign, FileText, Tag } from "lucide-react";
 import { CREATE_EXPENSE } from "@/graphql/mutations";
-import { GET_EXPENSES } from "@/graphql/queries";
+import { GET_EXPENSES_MONTHLY } from "@/graphql/queries";
 import { ApolloError, useMutation } from "@apollo/client";
 import { UserContext } from "./SessionProvider";
 
@@ -44,7 +44,7 @@ export function ExpenseForm() {
 	} = useForm<ExpenseFormData>({
 		resolver: zodResolver(expenseSchema),
 		defaultValues: {
-			currency: "USD",
+			currency: user?.preferredCurrency || "USD",
 			category: "OTHER",
 			isFixed: false,
 			date: new Date().toISOString().split("T")[0],
@@ -60,7 +60,7 @@ export function ExpenseForm() {
 		onError: (error: ApolloError) => {
 			console.error("Failed to create expense:", error);
 		},
-		refetchQueries: [GET_EXPENSES],
+		refetchQueries: [GET_EXPENSES_MONTHLY],
 	});
 
 	const onSubmit = (formData: ExpenseFormData) => {
@@ -139,7 +139,6 @@ export function ExpenseForm() {
 					</label>
 					<select
 						{...register("currency")}
-						value={user?.preferredCurrency || "USD"}
 						className="text-black w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 					>
 						{currencies.map((currency) => (

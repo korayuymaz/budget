@@ -52,6 +52,9 @@ export function ExpenseList({ month }: { month: string }) {
 			const result = await deleteExpense({ variables: { id } });
 			if (result.data?.deleteExpenses) {
 				setExpenses(expenses.filter((expense) => expense.id !== id));
+				setDisplayExpenses(
+					displayExpenses.filter((expense) => expense.id !== id)
+				);
 			} else {
 				alert("Failed to delete expense");
 			}

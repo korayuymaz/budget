@@ -57,6 +57,9 @@ export function EarningList({ month }: { month: string }) {
 
 			if (result.data?.deleteEarnings) {
 				setEarnings(earnings.filter((earning) => earning.id !== id));
+				setDisplayEarnings(
+					displayEarnings.filter((earning) => earning.id !== id)
+				);
 			} else {
 				alert("Failed to delete earning");
 			}
