@@ -15,6 +15,7 @@ import { DataTable } from "@/components/ui/DataTable";
 import { format } from "date-fns";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
 
 export default function Dashboard() {
 	const { data: session } = useSession();
@@ -76,12 +77,19 @@ export default function Dashboard() {
 		{
 			header: "Category",
 			accessorKey: "category",
+			cell: ({ row }: { row: Row<Expense> }) => {
+				return <Badge variant="secondary">{row.original.category}</Badge>;
+			},
 		},
 		{
 			header: "Fixed",
 			accessorKey: "isFixed",
 			cell: ({ row }: { row: Row<Expense> }) => {
-				return <span>{row.original.isFixed ? "Yes" : "No"}</span>;
+				return (
+					<Badge variant={row.original.isFixed ? "secondary" : "outline"}>
+						{row.original.isFixed ? "Yes" : "No"}
+					</Badge>
+				);
 			},
 		},
 	];
