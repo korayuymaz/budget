@@ -136,7 +136,7 @@ export default function Dashboard() {
 		return <Loading />;
 	}
 
-	if (!user) {
+	if (!user && session?.user) {
 		return (
 			<div>
 				<div className="flex items-center justify-center py-8">
