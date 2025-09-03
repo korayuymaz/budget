@@ -1,13 +1,17 @@
 import { useSession } from "next-auth/react";
 import { useQuery } from "@apollo/client";
 import { GET_USER_BY_ID } from "@/graphql/queries";
-import { createContext } from "react";
+import { createContext, useState } from "react";
 import { User } from "@/types";
 
-export const UserContext = createContext<{ user: User | null }>({ user: null });
+export const UserContext = createContext<{
+	user: User | null;
+	setUser: (user: User | null) => void;
+}>({ user: null, setUser: () => {} });
 
 const SessionProvider = ({ children }: { children: React.ReactNode }) => {
 	const { data: session } = useSession();
+	const [user, setUser] = useState<User | null>(null);
 
 	// Only execute the query if session exists and has an email
 	const { data: userData } = useQuery(GET_USER_BY_ID, {
@@ -17,7 +21,7 @@ const SessionProvider = ({ children }: { children: React.ReactNode }) => {
 	});
 
 	return (
-		<UserContext.Provider value={{ user: userData?.user || null }}>
+		<UserContext.Provider value={{ user: userData?.user || user, setUser }}>
 			{children}
 		</UserContext.Provider>
 	);

@@ -1,56 +1,72 @@
 "use client";
 
 import { useSession, signIn } from "next-auth/react";
-import { redirect } from "next/navigation";
 import { Wallet, LogIn } from "lucide-react";
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 import { GET_USER_BY_ID } from "@/graphql/queries";
 import { CREATE_USER } from "@/graphql/mutations";
 import Loading from "@/components/ui/Loading";
+import { client } from "@/app/lib/apollo";
+import { redirect } from "next/navigation";
 
 export default function SignInPage() {
 	const { data: session, status } = useSession();
-	const { data: user, loading: userLoading } = useQuery(GET_USER_BY_ID, {
-		variables: { email: session?.user.email },
-	});
 
-	// Utility function to handle user creation/update
-	const [createUser] = useMutation(CREATE_USER, {
-		onCompleted: () => {
-			redirect("/");
-		},
-	});
-
-	const handleUserInDatabase = () => {
-		createUser({
-			variables: {
-				user: {
-					googleId: session?.user?.googleId,
-					email: session?.user?.email,
-					name: session?.user?.name,
-					preferredCurrency: "TRY",
-				},
+	const [createUser, { loading: createUserLoading, error: createUserError }] =
+		useMutation(CREATE_USER, {
+			onCompleted: () => {
+				window.location.reload();
+				redirect("/");
 			},
 		});
+
+	const handleUserInDatabase = async () => {
+		try {
+			createUser({
+				variables: {
+					user: {
+						googleId: session?.user?.googleId,
+						email: session?.user?.email,
+						name: session?.user?.name,
+						preferredCurrency: "TRY",
+					},
+				},
+			});
+		} catch (err) {
+			console.error(err);
+		}
 	};
 
-	if (userLoading) {
+	const checkUserInDatabase = async () => {
+		try {
+			const { data } = await client.query({
+				query: GET_USER_BY_ID,
+				variables: { email: session?.user.email },
+			});
+			if (!data?.user) {
+				await handleUserInDatabase();
+			}
+			return data?.user;
+		} catch (err) {
+			console.error(err);
+		}
+	};
+
+	if (session) {
+		checkUserInDatabase();
+		redirect("/");
+	}
+
+	if (createUserLoading) {
 		return <div>Loading...</div>;
 	}
 
-	if (user) {
-		redirect("/");
+	if (createUserError) {
+		console.error(createUserError);
 	}
 
 	if (status === "loading") {
 		return <Loading />;
-	}
-
-	if (session) {
-		if (!user) {
-			handleUserInDatabase();
-			redirect("/");
-		}
 	}
 
 	return (

@@ -13,7 +13,11 @@ import { getCurrencySymbol } from "@/utils/getCurrencySymbol";
 import { Row } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/DataTable";
 import { format } from "date-fns";
+import { useSession } from "next-auth/react";
+import { redirect } from "next/navigation";
+
 export default function Dashboard() {
+	const { data: session } = useSession();
 	const [summary, setSummary] = useState<Summary | null>(null);
 	const { user } = useContext(UserContext);
 	const [totalEarnings, setTotalEarnings] = useState<number>(0);
@@ -108,22 +112,45 @@ export default function Dashboard() {
 	];
 
 	useEffect(() => {
-		if (data?.summary) {
-			const totalNetThisMonth =
-				data.summary.monthlyBreakdown[0].earnings -
-				data.summary.monthlyBreakdown[0].expenses;
-			setSummary(data.summary);
-			setTotalEarnings(data.summary.monthlyBreakdown[0].earnings);
-			setTotalExpenses(data.summary.monthlyBreakdown[0].expenses);
+		const summary = data?.summary;
+		const thisMonthExpenses = summary?.monthlyBreakdown[0]?.expenses || 0;
+		const thisMonthEarnings = summary?.monthlyBreakdown[0]?.earnings || 0;
+
+		if (summary) {
+			const totalNetThisMonth = thisMonthEarnings - thisMonthExpenses;
+			setSummary(summary);
+			setTotalEarnings(thisMonthEarnings);
+			setTotalExpenses(thisMonthExpenses);
 			setNetAmount(totalNetThisMonth);
-			setTotalBalance(data.summary.netAmount);
+			setTotalBalance(summary?.netAmount);
 			setRecentExpenses(expenses?.expenses || []);
 			setRecentEarnings(earnings?.earnings || []);
 		}
 	}, [data, expenses, earnings]);
 
-	if (summaryLoading || earningsLoading || expensesLoading || !user) {
+	if (!session?.user) {
+		redirect("/auth/signin");
+	}
+
+	if (summaryLoading || earningsLoading || expensesLoading) {
 		return <Loading />;
+	}
+
+	if (!user) {
+		return (
+			<div>
+				<div className="flex items-center justify-center py-8">
+					<button
+						onClick={() => {
+							window.location.reload();
+						}}
+						className="bg-blue-600 text-white px-4 py-2 rounded-md"
+					>
+						Retry
+					</button>
+				</div>
+			</div>
+		);
 	}
 
 	return (
