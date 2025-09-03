@@ -4,6 +4,7 @@ import { useState, useEffect, useContext } from "react";
 import { Expense } from "@/types";
 import { format } from "date-fns";
 import { Trash2 } from "lucide-react";
+import { Badge } from "./ui/badge";
 import { GET_EXPENSES_MONTHLY } from "@/graphql/queries";
 import { DELETE_EXPENSE } from "@/graphql/mutations";
 import { useMutation, useQuery } from "@apollo/client";
@@ -128,12 +129,19 @@ export function ExpenseList({ month }: { month: string }) {
 		{
 			header: "Category",
 			accessorKey: "category",
+			cell: ({ row }: { row: Row<DisplayExpense> }) => {
+				return <Badge variant="secondary">{row.original.category}</Badge>;
+			},
 		},
 		{
 			header: "Fixed",
 			accessorKey: "isFixed",
 			cell: ({ row }: { row: Row<DisplayExpense> }) => {
-				return <span>{row.original.isFixed ? "Yes" : "No"}</span>;
+				return (
+					<Badge variant={row.original.isFixed ? "secondary" : "outline"}>
+						{row.original.isFixed ? "Yes" : "No"}
+					</Badge>
+				);
 			},
 		},
 		{
