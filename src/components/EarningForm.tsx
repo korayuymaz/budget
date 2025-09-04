@@ -10,6 +10,7 @@ import { CREATE_EARNING } from "@/graphql/mutations";
 import { GET_EARNINGS_MONTHLY } from "@/graphql/queries";
 import { ApolloError, useMutation } from "@apollo/client";
 import { UserContext } from "./SessionProvider";
+import AlertOnSave from "./AlertOnSave";
 
 const earningSchema = z.object({
 	description: z.string().min(1, "Description is required"),
@@ -21,6 +22,7 @@ const earningSchema = z.object({
 type EarningFormData = z.infer<typeof earningSchema>;
 
 export function EarningForm() {
+	const [modalOpen, setModalOpen] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const { user } = useContext(UserContext);
 
@@ -37,9 +39,10 @@ export function EarningForm() {
 		},
 	});
 
-	const [createEarning] = useMutation(CREATE_EARNING, {
+	const [createEarning, { loading }] = useMutation(CREATE_EARNING, {
 		onCompleted: () => {
 			setIsSubmitting(false);
+			setModalOpen(true);
 		},
 		onError: (err: ApolloError) => {
 			console.error("Failed to create earning:", err.graphQLErrors);
@@ -147,12 +150,18 @@ export function EarningForm() {
 				</button>
 				<button
 					type="submit"
-					disabled={isSubmitting}
+					disabled={isSubmitting || loading}
 					className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 				>
-					{isSubmitting ? "Adding..." : "Add Earning"}
+					{isSubmitting || loading ? "Adding..." : "Add Earning"}
 				</button>
 			</div>
+			<AlertOnSave
+				modalOpen={modalOpen}
+				setModalOpen={setModalOpen}
+				title="Earning Added"
+				text="Earning added successfully"
+			/>
 		</form>
 	);
 }

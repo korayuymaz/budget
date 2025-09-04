@@ -6,7 +6,12 @@ import Loading from "@/components/ui/Loading";
 import MonthlyBreakdown from "@/components/MonthlyBreakdown";
 import { useContext, useEffect, useState } from "react";
 import { useQuery } from "@apollo/client";
-import { GET_SUMMARY, GET_EXPENSES, GET_EARNINGS } from "@/graphql/queries";
+import {
+	GET_SUMMARY,
+	GET_EXPENSES,
+	GET_EARNINGS,
+	GET_USER_BY_ID,
+} from "@/graphql/queries";
 import { UserContext } from "@/components/SessionProvider";
 import { Earning, Expense, Summary } from "@/types";
 import { getCurrencySymbol } from "@/utils/getCurrencySymbol";
@@ -16,11 +21,12 @@ import { format } from "date-fns";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { client } from "./lib/apollo";
 
 export default function Dashboard() {
 	const { data: session } = useSession();
 	const [summary, setSummary] = useState<Summary | null>(null);
-	const { user } = useContext(UserContext);
+	const { user, setUser } = useContext(UserContext);
 	const [totalEarnings, setTotalEarnings] = useState<number>(0);
 	const [totalExpenses, setTotalExpenses] = useState<number>(0);
 	const [netAmount, setNetAmount] = useState<number>(0);
@@ -144,21 +150,17 @@ export default function Dashboard() {
 		return <Loading />;
 	}
 
+	const getUser = async () => {
+		const { data } = await client.query({
+			query: GET_USER_BY_ID,
+			variables: { email: session?.user?.email },
+		});
+		const user = data?.user;
+		setUser(user);
+	};
+
 	if (!user && session?.user) {
-		return (
-			<div>
-				<div className="flex items-center justify-center py-8">
-					<button
-						onClick={() => {
-							window.location.reload();
-						}}
-						className="bg-blue-600 text-white px-4 py-2 rounded-md"
-					>
-						Retry
-					</button>
-				</div>
-			</div>
-		);
+		getUser();
 	}
 
 	return (

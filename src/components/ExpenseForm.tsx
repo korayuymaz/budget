@@ -10,6 +10,7 @@ import { CREATE_EXPENSE } from "@/graphql/mutations";
 import { GET_EXPENSES_MONTHLY } from "@/graphql/queries";
 import { ApolloError, useMutation } from "@apollo/client";
 import { UserContext } from "./SessionProvider";
+import AlertOnSave from "./AlertOnSave";
 
 const expenseSchema = z.object({
 	description: z.string().min(1, "Description is required"),
@@ -35,6 +36,7 @@ type ExpenseFormData = z.infer<typeof expenseSchema>;
 
 export function ExpenseForm() {
 	const { user } = useContext(UserContext);
+	const [modalOpen, setModalOpen] = useState(false);
 
 	const {
 		register,
@@ -53,9 +55,10 @@ export function ExpenseForm() {
 
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	const [createExpense] = useMutation(CREATE_EXPENSE, {
+	const [createExpense, { loading }] = useMutation(CREATE_EXPENSE, {
 		onCompleted: () => {
 			setIsSubmitting(false);
+			setModalOpen(true);
 		},
 		onError: (error: ApolloError) => {
 			console.error("Failed to create expense:", error);
@@ -210,12 +213,18 @@ export function ExpenseForm() {
 				</button>
 				<button
 					type="submit"
-					disabled={isSubmitting}
+					disabled={isSubmitting || loading}
 					className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 				>
-					{isSubmitting ? "Adding..." : "Add Expense"}
+					{isSubmitting || loading ? "Adding..." : "Add Expense"}
 				</button>
 			</div>
+			<AlertOnSave
+				modalOpen={modalOpen}
+				setModalOpen={setModalOpen}
+				title="Expense Added"
+				text="Expense added successfully"
+			/>
 		</form>
 	);
 }
