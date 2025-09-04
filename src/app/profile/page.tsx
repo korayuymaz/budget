@@ -11,6 +11,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import Image from "next/image";
 import { UPDATE_USER } from "@/graphql/mutations";
 import { UserContext } from "@/components/SessionProvider";
+import AlertOnSave from "@/components/AlertOnSave";
 
 export default function ProfilePage() {
 	const { data: session, status } = useSession();
@@ -24,7 +25,7 @@ export default function ProfilePage() {
 	});
 	const [saving, setSaving] = useState(false);
 	const [preferredCurrency, setPreferredCurrency] = useState<Currency>("USD");
-
+	const [modalOpen, setModalOpen] = useState(false);
 	useEffect(() => {
 		if (session) {
 			setPreferredCurrency(userData?.user?.preferredCurrency || "USD");
@@ -44,6 +45,7 @@ export default function ProfilePage() {
 			},
 		});
 		setSaving(false);
+		setModalOpen(true);
 	};
 
 	const currencies: { value: Currency; label: string; symbol: string }[] = [
@@ -231,6 +233,12 @@ export default function ProfilePage() {
 					</div>
 				</CardContent>
 			</Card>
+			<AlertOnSave
+				modalOpen={modalOpen}
+				setModalOpen={setModalOpen}
+				title="Currency Updated"
+				text="Currency updated successfully"
+			/>
 		</div>
 	);
 }

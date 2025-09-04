@@ -26,6 +26,7 @@ export function ExpenseList({ month }: { month: string }) {
 			month: month,
 		},
 		skip: !user?.id,
+		fetchPolicy: "cache-and-network",
 	});
 
 	const [deleteExpense] = useMutation(DELETE_EXPENSE);
